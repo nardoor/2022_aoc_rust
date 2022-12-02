@@ -5,7 +5,7 @@ struct Backpack {
 
 impl Backpack {
     fn total(&self) -> usize {
-        return self.fruits.iter().fold(0, |acc, c| acc + c);
+        return self.fruits.iter().sum();
     }
 }
 
@@ -30,7 +30,7 @@ impl From<&str> for Crew {
                 }
             }
         }
-        if fruits.len() > 0 {
+        if !fruits.is_empty() {
             elves.push(Backpack { fruits });
         }
         Crew { elves }
@@ -46,13 +46,14 @@ impl Crew {
             .total()
     }
 
+    // Suboptimal -> sorting whole array unecessary
     fn best_three_backpack(&self) -> usize {
         let len = self.elves.len();
         if len < 3 {
             panic!("Can't find best three backpacks without at least three backpacks");
         }
         let mut elves_cpy = self.elves.clone();
-        elves_cpy.sort_by(|b1, b2| b1.total().cmp(&b2.total()));
+        elves_cpy.sort_by_key(|b| b.total());
         elves_cpy[(len - 3)..]
             .iter()
             .fold(0, |acc, e| acc + e.total())
