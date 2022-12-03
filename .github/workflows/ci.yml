@@ -7,24 +7,30 @@ env:
 
 jobs:
     check:
-        runs-on: ubuntu-latest-rust-nightly
+        runs-on: ubuntu-latest
         name: Check
         steps:
             - uses: actions/checkout@v2
-            - name: cargo +nightly check
-              run: cargo +nightly check
+            - name: install nightly
+              run: rustup install nightly
+            - name: cargo check
+              run: cargo check
     test:
-        runs-on: ubuntu-latest-rust-nightly
+        runs-on: ubuntu-latest
         name: Test
         steps:
             - uses: actions/checkout@v2
-            - name: cargo +nightly test
-              run: cargo +nightly test
+            - name: install nightly
+              run: rustup install nightly
+            - name: cargo test
+              run: cargo test
     # uncomment to enable clippy lints
     # clippy:
-    #     runs-on: ubuntu-latest-rust-nightly
+    #     runs-on: ubuntu-latest
     #     name: Lint (clippy)
     #     steps:
     #         - uses: actions/checkout@v2
-    #         - name: cargo +nightly clippy
-    #           run: cargo +nightly clippy -- -D warnings
+    #         - name: install nightly
+    #           run: rustup install nightly
+    #         - name: cargo clippy
+    #           run: cargo clippy -- -D warnings
