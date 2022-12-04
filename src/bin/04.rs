@@ -54,7 +54,7 @@ pub fn part_two(input: &str) -> Option<u32> {
                 let a2 = Assignment(x2, y2);
                 a1.overlaps(&a2)
             })
-            .count() as u32 
+            .count() as u32,
     )
 }
 
