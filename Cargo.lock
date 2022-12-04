@@ -6,8 +6,15 @@ version = 3
 name = "advent_of_code"
 version = "0.8.0"
 dependencies = [
+ "eyes",
  "pico-args",
 ]
+
+[[package]]
+name = "eyes"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20c46942b268eef9b50b6766c146e8a4903e5e51c4236d321af6c8069ef9a60b"
 
 [[package]]
 name = "pico-args"
