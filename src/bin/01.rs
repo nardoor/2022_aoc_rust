@@ -1,4 +1,4 @@
-use std::{array::IntoIter};
+use std::array::IntoIter;
 
 #[derive(Clone, Debug)]
 struct Backpack {
@@ -55,11 +55,9 @@ impl<T: Ord + Copy, const N: usize> SortedArray<T, N> {
         }
     }
 
-    pub fn iter(&self) -> IntoIter<T, N>
-    {
+    pub fn iter(&self) -> IntoIter<T, N> {
         self.v.into_iter()
     }
-
 }
 
 impl<T: Ord + Copy, const N: usize> From<[T; N]> for SortedArray<T, N> {
@@ -68,7 +66,6 @@ impl<T: Ord + Copy, const N: usize> From<[T; N]> for SortedArray<T, N> {
         SortedArray { v }
     }
 }
-
 
 impl Backpack {
     fn total(&self) -> usize {
@@ -132,7 +129,9 @@ impl Crew {
     // part_two => ~900µs
     fn best_n_backpacks<const N: usize>(&self) -> usize {
         let mut sorted_array = SortedArray::from([0; N]);
-        self.elves.iter().for_each(|el| sorted_array.insert(el.total()));
+        self.elves
+            .iter()
+            .for_each(|el| sorted_array.insert(el.total()));
         sorted_array.iter().sum()
     }
 }

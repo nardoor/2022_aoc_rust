@@ -1,7 +1,7 @@
 #![feature(iter_array_chunks)]
 // Above feature flag requires nightly
 
-use std::{collections::HashSet, str::Chars, iter::Chain};
+use std::{collections::HashSet, iter::Chain, str::Chars};
 
 // ascii value of 'a' - 1
 const OFFSET_LOWERCASE: u8 = b'a' - 1;
@@ -88,7 +88,7 @@ impl From<[&str; 3]> for ElvesGroup {
 }
 
 impl ElvesGroup {
-    // total part_two ~3.30ms 
+    // total part_two ~3.30ms
     fn get_badge(&self) -> Option<Item> {
         let r1 = &self.rucksacks[0];
         let r2 = &self.rucksacks[1];
@@ -97,10 +97,8 @@ impl ElvesGroup {
         let seen: HashSet<Item> = r1.get_all_items_iter().collect();
         let mut common: HashSet<Item> = HashSet::new();
 
-        for item in r2.get_all_items_iter()
-        {
-            if seen.contains(&item)
-            {
+        for item in r2.get_all_items_iter() {
+            if seen.contains(&item) {
                 common.insert(item);
             }
         }
@@ -128,11 +126,13 @@ pub fn part_two(input: &str) -> Option<u32> {
         input
             .lines()
             .array_chunks::<3>() // requires rust nightly
-            .map(|group| ElvesGroup::from(group)
-                .get_badge()
-                .expect("Failed to get_badge() out of ElvesGroup;")
-                .priority() as u32
-            ).sum()
+            .map(|group| {
+                ElvesGroup::from(group)
+                    .get_badge()
+                    .expect("Failed to get_badge() out of ElvesGroup;")
+                    .priority() as u32
+            })
+            .sum(),
     )
 }
 
