@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+#![feature(iter_array_chunks)]
 
 trait Unicity {
     fn all_unique(&self) -> bool;
@@ -10,6 +10,7 @@ impl Unicity for [char; 3] {
     }
 }
 
+#[derive(Debug)]
 struct Similaritude {
     pub i1: usize,
     pub i2: usize,
@@ -28,10 +29,8 @@ impl<T: PartialEq, const N: usize> UnicityTracker<T, N> {
         let mut sims = vec![];
         for (i1, e1) in data.iter().enumerate() {
             for (i2, e2) in data.iter().enumerate() {
-                if *e1 == *e2 {
-                    if i1 != i2 {
-                        sims.push(Similaritude { i1, i2 })
-                    }
+                if *e1 == *e2 && i1 != i2 {
+                    sims.push(Similaritude { i1, i2 })
                 }
             }
         }
@@ -40,7 +39,7 @@ impl<T: PartialEq, const N: usize> UnicityTracker<T, N> {
             sims: Some(sims),
         }
     }
-    
+
     fn get_data(&self) -> &[T; N] {
         &self.data
     }
@@ -52,11 +51,10 @@ impl<T: PartialEq, const N: usize> UnicityTracker<T, N> {
             return;
         }
 
+        // add new similaritudes
         for (i1, e1) in self.data.iter().enumerate() {
-            if e == *e1 {
-                if i1 != i {
-                    next_sims.push(Similaritude{i1, i2: i});
-                }
+            if e == *e1 && i1 != i {
+                next_sims.push(Similaritude { i1, i2: i });
             }
         }
 
@@ -64,28 +62,30 @@ impl<T: PartialEq, const N: usize> UnicityTracker<T, N> {
         let sims = self.sims.take();
         self.sims = None;
 
-        self.sims = Some(sims.unwrap().into_iter().filter(
-            |s| {
-                if s.i1 == i {
-                    if self.data[s.i2] != e {
+        self.sims = Some(
+            sims.unwrap()
+                .into_iter()
+                .filter(|s| {
+                    if s.i1 == i && self.data[s.i2] != e {
                         return false;
                     }
-                }
-                
-                if s.i2 == i {
-                    if self.data[s.i1] != e {
-                        return false;
-                    }
-                }
 
-                true
-            }
-        ).collect());
+                    if s.i2 == i && self.data[s.i1] != e {
+                        return false;
+                    }
+
+                    true
+                })
+                .collect(),
+        );
+
+        self.data[i] = e;
+        self.sims.as_mut().unwrap().append(&mut next_sims);
     }
 }
 
 impl<T: PartialEq, const N: usize> Unicity for UnicityTracker<T, N> {
-    // Hypothesis -> all similaritudes are noted 
+    // Hypothesis -> all similaritudes are noted
     fn all_unique(&self) -> bool {
         self.sims.as_ref().unwrap().is_empty()
     }
@@ -94,7 +94,7 @@ impl<T: PartialEq, const N: usize> Unicity for UnicityTracker<T, N> {
 fn start_marker_count(line: &str) -> Option<u32> {
     assert!(line.len() > 3);
     let mut old: [char; 3] = [
-        line.chars().nth(0).unwrap(),
+        line.chars().next().unwrap(),
         line.chars().nth(1).unwrap(),
         line.chars().nth(2).unwrap(),
     ];
@@ -112,6 +112,17 @@ fn start_marker_count(line: &str) -> Option<u32> {
 }
 
 fn message_marker_count(line: &str) -> Option<u32> {
+    let data = line.chars().array_chunks::<13>().next().unwrap();
+    let mut ut = UnicityTracker::new(data);
+    let mut i = 0;
+    for (count, c) in line.chars().enumerate().skip(13) {
+        if !ut.get_data().contains(&c) && ut.all_unique() {
+            return Some((count + 1) as u32);
+        } else {
+            ut.set(i, c);
+            i = (i + 1) % 13;
+        }
+    }
     None
 }
 
@@ -120,7 +131,7 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    None
+    message_marker_count(input)
 }
 
 fn main() {
@@ -142,7 +153,7 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 6);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(23));
     }
 
     #[test]
@@ -160,6 +171,7 @@ mod tests {
     #[test]
     fn test_message_marker_count() {
         for (marker, count) in [
+            ("abcdefghijklmnopqrstuvwxyz", 14),
             ("mjqjpqmgbljsphdztnvjfqwrcgsmlb", 19),
             ("bvwbjplbgvbhsrlpgdmjqwftvncz", 23),
             ("nppdvjthqldpwncqszvftbrmjlhg", 23),
