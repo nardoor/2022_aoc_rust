@@ -1,5 +1,18 @@
 #![feature(iter_array_chunks)]
 
+/*
+(debug binary)
+🎄 Part 1 🎄
+1647 (elapsed: 320.94µs)
+🎄 Part 2 🎄
+2447 (elapsed: 4.63ms)
+
+(release binary)
+🎄 Part 1 🎄
+1647 (elapsed: 13.67µs)
+🎄 Part 2 🎄
+2447 (elapsed: 251.14µs)
+*/
 trait Unicity {
     fn all_unique(&self) -> bool;
 }

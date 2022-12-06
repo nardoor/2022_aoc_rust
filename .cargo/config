@@ -2,5 +2,5 @@
 scaffold = "run --bin scaffold -- "
 download = "run --bin download -- "
 
-solve = "run --bin"
+solve = "run --release --bin"
 all = "run"
