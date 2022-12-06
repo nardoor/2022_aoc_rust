@@ -79,17 +79,12 @@ struct CargoCrane {
 
 impl Display for CargoCrane {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let height = self
-            .stacks
-            .iter()
-            .map(|s| s.len())
-            .max()
-            .unwrap_or(0);
+        let height = self.stacks.iter().map(|s| s.len()).max().unwrap_or(0);
         for i in (0..height).rev() {
             self.stacks.iter().for_each(|s| {
                 let c = s.try_get(i);
                 match c {
-                    None => f.write_str(&format!("    ")),
+                    None => f.write_str("    "),
                     Some(&c) => f.write_str(&format!("[{c}] ")),
                 }
                 .expect("Failed write_str in CargoCrane::Display.");
@@ -97,7 +92,7 @@ impl Display for CargoCrane {
             f.write_char('\n').ok();
         }
         for i in 0..self.stacks.len() {
-            f.write_str(&format!(" {}  ", i))
+            f.write_str(&format!(" {i}  "))
                 .expect("Failed write_str in CargoCrane::Display");
         }
         Ok(())
@@ -155,14 +150,12 @@ impl CargoCrane {
     fn parse_lines(&mut self, lines: &str) {
         let lines = lines.lines();
         lines.for_each(|l: &str| {
-            if l.split(' ').all(|c| "0123456789".contains(c)) || l.trim().len() == 0 {
+            if l.split(' ').all(|c| "0123456789".contains(c)) || l.trim().is_empty() {
                 self.crates_parsed = true;
+            } else if !self.crates_parsed {
+                self.parse_crates(l);
             } else {
-                if !self.crates_parsed {
-                    self.parse_crates(l);
-                } else {
-                    self.parse_move(l);
-                }
+                self.parse_move(l);
             }
         })
     }
@@ -207,7 +200,7 @@ impl CargoCrane {
 
     #[inline]
     fn is_solved(&self) -> bool {
-        self.instructions.len() == 0
+        self.instructions.is_empty()
     }
 
     fn get_sol(&self) -> String {
