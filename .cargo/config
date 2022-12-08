@@ -3,4 +3,6 @@ scaffold = "run --bin scaffold -- "
 download = "run --bin download -- "
 
 solve = "run --release --bin"
+solved = "run --bin"
+
 all = "run"
