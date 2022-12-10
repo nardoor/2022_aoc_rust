@@ -1,4 +1,4 @@
-// debug 
+// debug
 // 🎄 Part 1 🎄
 // 5513 (elapsed: 4.54ms)
 // 🎄 Part 2 🎄
@@ -32,9 +32,9 @@ impl From<&str> for Move {
     }
 }
 
-impl Into<fn(&mut Point) -> ()> for Dir {
-    fn into(self) -> fn(&mut Point) -> () {
-        match self {
+impl From<Dir> for fn(&mut Point) -> () {
+    fn from(val: Dir) -> Self {
+        match val {
             Dir::R => Point::right,
             Dir::U => Point::up,
             Dir::L => Point::left,
@@ -256,7 +256,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     parse_moves_result.moves.iter().for_each(|&Move(dir, n)| {
         for _ in 0..n {
             rope.pull_head(Into::<fn(&mut Point) -> ()>::into(dir));
-            history.set(&rope.tail(), true);
+            history.set(rope.tail(), true);
         }
     });
 

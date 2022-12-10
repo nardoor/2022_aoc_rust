@@ -1,28 +1,28 @@
 use std::slice::IterMut;
 
-// ┌╼ 23:30:41 2022_aoc_rust git:(main) ✗
-// └$ cargo solved 08
-//     Finished dev [unoptimized + debuginfo] target(s) in 0.01s
-//      Running `target/debug/08`
-// 🎄 Part 1 🎄
-// 1805 (elapsed: 3.39ms)
-// 🎄 Part 2 🎄
-// 444528 (elapsed: 110.21ms)
+/*
+-> debug:
+🎄 Part 1 🎄
+1805 (elapsed: 2.71ms)
+🎄 Part 2 🎄
+385728 (elapsed: 6.67ms)
 
-// ┌╼ 23:30:47 2022_aoc_rust git:(main) ✗
-// └$ cargo solve 08
-//     Finished release [optimized] target(s) in 0.01s
-//      Running `target/release/08`
-// 🎄 Part 1 🎄
-// 1805 (elapsed: 147.10µs)
-// 🎄 Part 2 🎄
-// 444528 (elapsed: 1.57ms)
+-> release + ignoring not visible trees:
+🎄 Part 1 🎄
+1805 (elapsed: 62.53µs)
+🎄 Part 2 🎄
+385728 (elapsed: 137.97µs)
 
+-> release + not ignoring visible trees:
+🎄 Part 1 🎄
+1805 (elapsed: 62.29µs)
+🎄 Part 2 🎄
+444528 (elapsed: 302.20µs)
+*/
 #[derive(Debug)]
 struct Tree {
     height: u8,
     juged_visible: bool,
-    // scenery: Option<u32>,
 }
 
 #[derive(Debug)]
@@ -45,7 +45,6 @@ impl From<&str> for TreeLine {
                 Tree {
                     height,
                     juged_visible: false,
-                    // scenery: None,
                 }
             })
             .collect();
@@ -66,12 +65,12 @@ impl From<&str> for Forest {
 }
 
 impl Forest {
-    fn get_tree_mut(&mut self, x: usize, y: usize) -> &mut Tree {
+    fn get_tree(&self, x: usize, y: usize) -> &Tree {
         self.tree_lines
-            .get_mut(y)
+            .get(y)
             .expect("Failed indexing Forest")
             .trees
-            .get_mut(x)
+            .get(x)
             .expect("Failed indexing TreeLine")
     }
     fn get_row_len(&self) -> usize {
@@ -122,22 +121,36 @@ impl Forest {
         count
     }
 
-    fn get_best_scenery(&mut self) -> u32 {
+    fn get_best_scenery(&mut self, ignore_not_visible: bool) -> u32 {
         let mut best_scenery = 0;
         for x in 0..self.get_row_len() {
             for y in 0..self.get_col_len() {
-                best_scenery = best_scenery.max(self.evaluate_scenery(x, y));
+                best_scenery = best_scenery.max(self.evaluate_scenery(x, y, ignore_not_visible));
             }
         }
         best_scenery
     }
 
-    fn evaluate_scenery(&mut self, x: usize, y: usize) -> u32 {
-        // if self.get_tree_mut(x, y).scenery.is_some() {
-        //     return self.get_tree_mut(x, y).scenery.unwrap();
-        // }
+    fn evaluate_scenery(&mut self, x: usize, y: usize, ignore_not_visible: bool) -> u32 {
+        // ignoring not visible might false the result!!!
+        // what if a forst is surrounded with very high trees
+        // then trees in the middle might have a good scenery,
+        // but they won't be considered visible by the exterior !
+        // example:
+        /*
 
-        let height = self.get_tree_mut(x, y).height;
+        99999
+        91119
+        91219
+        91119
+        99999
+
+
+        */
+        if ignore_not_visible && !self.get_tree(x, y).juged_visible {
+            return 0;
+        }
+        let height = self.get_tree(x, y).height;
 
         let row_len = self.get_row_len();
         let col_len = self.get_col_len();
@@ -147,61 +160,43 @@ impl Forest {
         let mut count_right = 0;
         let mut count_down = 0;
 
-        // right
-        self.iter_mut_line(y)
-            .skip(x + 1)
-            .try_for_each(|t: &mut Tree| {
+        if x < row_len {
+            for rx in x + 1..row_len {
                 count_right += 1;
-                if t.height >= height {
-                    return Err(());
+                if self.get_tree(rx, y).height >= height {
+                    break;
                 }
-                Ok(())
-            })
-            .ok();
+            }
+        }
 
-        // left
-        self.iter_mut_line(y)
-            .rev()
-            .skip(row_len - x)
-            .try_for_each(|t: &mut Tree| {
+        if x > 0 {
+            for lx in (0..=x - 1).rev() {
                 count_left += 1;
-                if t.height >= height {
-                    return Err(());
+                if self.get_tree(lx, y).height >= height {
+                    break;
                 }
-                Ok(())
-            })
-            .ok();
+            }
+        }
 
-        // down
-        self.iter_mut_col(x)
-            .skip(y + 1)
-            .try_for_each(|t: &mut Tree| {
+        if y < col_len {
+            for dy in y + 1..col_len {
                 count_down += 1;
-                if t.height >= height {
-                    return Err(());
+                if self.get_tree(x, dy).height >= height {
+                    break;
                 }
-                Ok(())
-            })
-            .ok();
+            }
+        }
 
-        // up
-        self.iter_mut_col(x)
-            .rev()
-            .skip(col_len - y)
-            .try_for_each(|t: &mut Tree| {
+        if y > 0 {
+            for ty in (0..=y - 1).rev() {
                 count_top += 1;
-                if t.height >= height {
-                    return Err(());
+                if self.get_tree(x, ty).height >= height {
+                    break;
                 }
-                Ok(())
-            })
-            .ok();
+            }
+        }
 
-        let scenery = count_down * count_left * count_right * count_top;
-        // println!("Tree at {x},{y} has down: {count_down}, right: {count_right}, top: {count_top}, left: {count_left} -> scenery: {scenery}");
-        // self.get_tree_mut(x, y).scenery = Some(scenery);
-
-        scenery
+        count_down * count_left * count_right * count_top
     }
 }
 
@@ -236,7 +231,9 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    Some(Forest::from(input).get_best_scenery())
+    let mut forest = Forest::from(input);
+    // forest.visible_trees();
+    Some(forest.get_best_scenery(false))
 }
 
 fn main() {
@@ -259,5 +256,23 @@ mod tests {
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 8);
         assert_eq!(part_two(&input), Some(8));
+    }
+    #[test]
+    fn test_best_scenry() {
+        let lines = ["99999", "91119", "91219", "91119", "99999"];
+        let inp = lines.join("\n");
+        let mut forest = Forest::from(inp.as_str());
+        forest.visible_trees();
+        // 2 * 2 * 2 * 2
+        /*
+        ["99999"
+         "91119"
+         "91219"
+         "91119"
+         "99999"];
+        */
+        assert_eq!(forest.get_best_scenery(false), 16);
+        // This test passes but for the same forest we get different result, the optimisation might false the result !
+        assert_eq!(forest.get_best_scenery(true), 0);
     }
 }
