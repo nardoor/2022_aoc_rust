@@ -22,7 +22,7 @@ use std::slice::IterMut;
 struct Tree {
     height: u8,
     juged_visible: bool,
-    scenery: Option<u32>,
+    // scenery: Option<u32>,
 }
 
 #[derive(Debug)]
@@ -45,7 +45,7 @@ impl From<&str> for TreeLine {
                 Tree {
                     height,
                     juged_visible: false,
-                    scenery: None,
+                    // scenery: None,
                 }
             })
             .collect();
@@ -133,9 +133,9 @@ impl Forest {
     }
 
     fn evaluate_scenery(&mut self, x: usize, y: usize) -> u32 {
-        if self.get_tree_mut(x, y).scenery.is_some() {
-            return self.get_tree_mut(x, y).scenery.unwrap();
-        }
+        // if self.get_tree_mut(x, y).scenery.is_some() {
+        //     return self.get_tree_mut(x, y).scenery.unwrap();
+        // }
 
         let height = self.get_tree_mut(x, y).height;
 
@@ -199,7 +199,7 @@ impl Forest {
 
         let scenery = count_down * count_left * count_right * count_top;
         // println!("Tree at {x},{y} has down: {count_down}, right: {count_right}, top: {count_top}, left: {count_left} -> scenery: {scenery}");
-        self.get_tree_mut(x, y).scenery = Some(scenery);
+        // self.get_tree_mut(x, y).scenery = Some(scenery);
 
         scenery
     }
