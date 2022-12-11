@@ -1,3 +1,29 @@
+/*
+-> Debug:
+🎄 Part 1 🎄
+14620 (elapsed: 79.45µs)
+🎄 Part 2 🎄
+###....##.####.###..#..#.###..####.#..#.
+#..#....#.#....#..#.#..#.#..#.#....#..#.
+###.....#.###..#..#.####.#..#.###..#..#.
+##.#....#.#....###..#..#.###..#....#..#.
+#..#.#..#.#....#.#..#..#.#.#..#....#..#.
+###...##..#....#..#.#..#.#..#.#.....##..
+ (elapsed: 80.28µs)
+
+-> Release:
+🎄 Part 1 🎄
+14620 (elapsed: 6.25µs)
+🎄 Part 2 🎄
+###....##.####.###..#..#.###..####.#..#.
+#..#....#.#....#..#.#..#.#..#.#....#..#.
+###.....#.###..#..#.####.#..#.###..#..#.
+##.#....#.#....###..#..#.###..#....#..#.
+#..#.#..#.#....#.#..#..#.#.#..#....#..#.
+###...##..#....#..#.#..#.#..#.#.....##..
+ (elapsed: 6.38µs)
+*/
+
 use std::str::Lines;
 
 use nom::{branch::alt, bytes::complete::tag, IResult};
@@ -121,7 +147,7 @@ impl CRT {
     fn draw_pixel(&mut self, x_reg: isize, cycle: usize) {
         let npixel_index = cycle % 40;
         let x: usize = x_reg.clamp(0, 39) as usize;
-        if npixel_index <= x + 1 && npixel_index >= x - 1 {
+        if npixel_index <= x + 1 && npixel_index >= x.checked_sub(1).unwrap_or(0) {
             self.screen.push('#');
         } else {
             self.screen.push('.')
@@ -129,7 +155,6 @@ impl CRT {
         if npixel_index == 39 {
             self.screen.push('\n');
         }
-        println!("{}\n\n", self.screen);
     }
 }
 
