@@ -1,3 +1,16 @@
+/*
+-> Debug:
+🎄 Part 1 🎄
+108240 (elapsed: 589.90µs)
+🎄 Part 2 🎄
+25712998901 (elapsed: 146.86ms)
+
+-> Release:
+🎄 Part 1 🎄
+108240 (elapsed: 60.58µs)
+🎄 Part 2 🎄
+25712998901 (elapsed: 15.67ms)
+*/
 use std::collections::VecDeque;
 
 use nom::{
@@ -13,30 +26,30 @@ use nom::{
 
 #[derive(Debug)]
 enum Var {
-    OLD,
-    VAL(usize),
+    Old,
+    Val(usize),
 }
 
 impl Var {
     fn val(&self) -> Option<usize> {
         match self {
-            Var::OLD => None,
-            Var::VAL(u) => Some(*u),
+            Var::Old => None,
+            Var::Val(u) => Some(*u),
         }
     }
 }
 
 #[derive(Debug)]
 enum Operation {
-    MUL(Var, Var),
-    SUM(Var, Var),
+    Mul(Var, Var),
+    Sum(Var, Var),
 }
 
 impl Operation {
     fn cpt(&self, old: usize) -> usize {
         match self {
-            Operation::MUL(v1, v2) => v1.val().unwrap_or(old) * v2.val().unwrap_or(old),
-            Operation::SUM(v1, v2) => v1.val().unwrap_or(old) + v2.val().unwrap_or(old),
+            Operation::Mul(v1, v2) => v1.val().unwrap_or(old) * v2.val().unwrap_or(old),
+            Operation::Sum(v1, v2) => v1.val().unwrap_or(old) + v2.val().unwrap_or(old),
         }
     }
 }
@@ -63,11 +76,13 @@ struct Monkey {
 }
 
 impl Monkey {
-    fn inspect_item(&mut self, item: &mut Item, relief: bool) {
+    fn inspect_item(&mut self, item: &mut Item, relief: bool, relief_modulus: usize) {
         // Monkey inspects item
         item.worry_level = self.operation.cpt(item.worry_level);
         if relief {
             item.worry_level = (item.worry_level as f64 / 3.).floor() as usize;
+        } else {
+            item.worry_level %= relief_modulus
         }
         self.amount_inspect += 1;
     }
@@ -76,16 +91,16 @@ impl Monkey {
         if item.worry_level % self.test.divider == 0 {
             return self.test.true_monkey;
         }
-        return self.test.false_monkey;
+        self.test.false_monkey
     }
 
-    fn step_play_turn(&mut self, relief: bool) -> Option<(usize, Item)> {
+    fn step_play_turn(&mut self, relief: bool, relief_modulus: usize) -> Option<(usize, Item)> {
         if self.items.is_empty() {
             return None;
         }
         let mut item = self.items.pop_front().unwrap();
 
-        self.inspect_item(&mut item, relief);
+        self.inspect_item(&mut item, relief, relief_modulus);
         let monkey_id = self.test_item(&item);
 
         Some((monkey_id, item))
@@ -101,8 +116,8 @@ fn tabbing(input: &str) -> IResult<&str, ()> {
 fn parse_item(input: &str) -> IResult<&str, Item> {
     preceded(
         alt((tag(" "), tag(", "))),
-        map(digit1, |d| Item {
-            worry_level: usize::from_str_radix(d, 10).expect("Failed parsing Item digit."),
+        map(digit1, |d: &str| Item {
+            worry_level: d.parse::<usize>().expect("Failed parsing Item digit."),
         }),
     )(input)
 }
@@ -114,8 +129,8 @@ fn parse_items(input: &str) -> IResult<&str, Vec<Item>> {
 /* Parse Operation */
 fn parse_var(input: &str) -> IResult<&str, Var> {
     alt((
-        map(tag("old"), |_| Var::OLD),
-        map(digit1, |d| Var::VAL(usize::from_str_radix(d, 10).unwrap())),
+        map(tag("old"), |_| Var::Old),
+        map(digit1, |d: &str| Var::Val(d.parse::<usize>().unwrap())),
     ))(input)
 }
 
@@ -129,8 +144,8 @@ fn parse_operation(input: &str) -> IResult<&str, Operation> {
                 parse_var,
             )),
             |(var1, operator, var2)| match operator {
-                "*" => Operation::MUL(var1, var2),
-                "+" => Operation::SUM(var1, var2),
+                "*" => Operation::Mul(var1, var2),
+                "+" => Operation::Sum(var1, var2),
                 _ => unreachable!(),
             },
         ),
@@ -150,7 +165,7 @@ fn parse_branch(input: &str) -> IResult<&str, (bool, usize)> {
         ),
         preceded(
             tag(": throw to monkey "),
-            map(digit1, |d| usize::from_str_radix(d, 10).unwrap()),
+            map(digit1, |d: &str| d.parse::<usize>().unwrap()),
         ),
     )(input)
 }
@@ -159,7 +174,7 @@ fn parse_test(input: &str) -> IResult<&str, Test> {
     let (to_parse, (divider, (bool1, id1), (bool2, id2))) = tuple((
         delimited(
             tag("Test: divisible by "),
-            map(digit1, |d| usize::from_str_radix(d, 10).unwrap()),
+            map(digit1, |d: &str| d.parse::<usize>().unwrap()),
             line_ending,
         ),
         delimited(tabbing, parse_branch, line_ending),
@@ -197,7 +212,7 @@ fn parse_monkey(input: &str) -> IResult<&str, Monkey> {
         tuple((
             delimited(
                 tag("Monkey "),
-                map(digit1, |d| usize::from_str_radix(d, 10).unwrap()),
+                map(digit1, |d: &str| d.parse::<usize>().unwrap()),
                 pair(tag(":"), line_ending),
             ),
             delimited(tabbing, parse_items, line_ending),
@@ -220,14 +235,32 @@ fn parse_monkeys(input: &str) -> IResult<&str, Vec<Monkey>> {
 
 struct KeepAway {
     monkeys: Vec<Monkey>,
-    relief: bool
+    relief: bool,
+    fake_relief_divider: usize,
 }
 
 impl KeepAway {
+    fn new(monkeys: Vec<Monkey>, relief: bool) -> Self {
+        let fake_relief_divider = if !relief {
+            monkeys.iter().fold(1, |acc, m| acc * m.test.divider)
+        } else {
+            0
+        };
+
+        KeepAway {
+            monkeys,
+            relief,
+            fake_relief_divider,
+        }
+    }
+
     fn play_turn(&mut self, monkey_id: usize) {
         assert_eq!(monkey_id, self.monkeys[monkey_id].id);
-        while let Some((target_monkey_id, item)) =
-            self.monkeys.get_mut(monkey_id).unwrap().step_play_turn(self.relief)
+        while let Some((target_monkey_id, item)) = self
+            .monkeys
+            .get_mut(monkey_id)
+            .unwrap()
+            .step_play_turn(self.relief, self.fake_relief_divider)
         {
             // println!(
             //     "\tItem with worry level {} is thrown to monkey {target_monkey_id}",
@@ -248,7 +281,7 @@ impl KeepAway {
         let mut inspect_amounts: Vec<usize> =
             self.monkeys.iter().map(|m| m.amount_inspect).collect();
         // for (index, ia) in inspect_amounts.iter().enumerate() {
-            // println!("Monkey {index} => inspected {ia} items !");
+        // println!("Monkey {index} => inspected {ia} items !");
         // }
         inspect_amounts.sort();
         assert!(inspect_amounts.len() >= 2);
@@ -259,7 +292,8 @@ impl KeepAway {
 pub fn part_one(input: &str) -> Option<usize> {
     let (rest, monkeys) = parse_monkeys(input).expect("Failed parsing Monkeys.");
     assert_eq!(rest.trim(), "");
-    let mut keep_away = KeepAway { monkeys, relief: true };
+    let mut keep_away = KeepAway::new(monkeys, true);
+
     for _i in 0..20 {
         // println!("round {_i}:");
         keep_away.play_round();
@@ -271,9 +305,12 @@ pub fn part_one(input: &str) -> Option<usize> {
 pub fn part_two(input: &str) -> Option<usize> {
     let (rest, monkeys) = parse_monkeys(input).expect("Failed parsing Monkeys.");
     assert_eq!(rest.trim(), "");
-    let mut keep_away = KeepAway { monkeys, relief: false };
+    let mut keep_away = KeepAway::new(monkeys, false);
+
     for _i in 0..10_000 {
-        // println!("round {_i}:");
+        // if _i % 100 == 0 {
+        //     println!("round {_i}:");
+        // }
         keep_away.play_round();
         // println!("====");
     }
@@ -307,6 +344,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 11);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(2713310158));
     }
 }
