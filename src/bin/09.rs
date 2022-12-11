@@ -10,6 +10,8 @@
 // 🎄 Part 2 🎄
 // 2427 (elapsed: 347.03µs)
 
+use std::cmp::Ordering;
+
 #[derive(Clone, Copy)]
 enum Dir {
     R,
@@ -119,17 +121,17 @@ impl Point {
         false
     }
     fn towards_vert(&mut self, point: &Self) {
-        if point.y() > self.y() {
-            self.up();
-        } else if point.y() < self.y() {
-            self.down();
+        match point.y().cmp(&self.y()) {
+            Ordering::Equal => {},
+            Ordering::Greater => self.up(),
+            Ordering::Less => self.down(),
         }
     }
     fn towards_hori(&mut self, point: &Self) {
-        if point.x() > self.x() {
-            self.right();
-        } else if point.x() < self.x() {
-            self.left();
+        match point.x().cmp(&self.x()) {
+            Ordering::Equal => {},
+            Ordering::Greater => self.right(),
+            Ordering::Less => self.left(),
         }
     }
     pub fn trail_towards(&mut self, point: &Self) {

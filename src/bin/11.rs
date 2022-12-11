@@ -7,9 +7,9 @@
 
 -> Release:
 🎄 Part 1 🎄
-108240 (elapsed: 60.58µs)
+108240 (elapsed: 35.30µs)
 🎄 Part 2 🎄
-25712998901 (elapsed: 15.67ms)
+25712998901 (elapsed: 9.15ms)
 */
 use std::collections::VecDeque;
 
