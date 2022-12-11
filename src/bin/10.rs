@@ -34,22 +34,22 @@ const CYCLE_PARTICULIAR_VALUES: [usize; CYCLE_PARTICULIAR_VALUES_COUNT] =
 
 #[derive(Debug)]
 enum Instr {
-    NOOP,
-    ADDX(i8),
+    Noop,
+    Addx(i8),
 }
 
 struct InstrParser {}
 impl InstrParser {
     fn parse_noop(input: &str) -> IResult<&str, Instr> {
         let (input, _) = tag("noop")(input)?;
-        Ok((input, Instr::NOOP))
+        Ok((input, Instr::Noop))
     }
 
     fn parse_addx(input: &str) -> IResult<&str, Instr> {
         let (input, _) = tag("addx ")(input)?;
         Ok((
             "",
-            Instr::ADDX(i8::from_str_radix(input, 10).expect("Failed parsing i8.")),
+            Instr::Addx(input.parse::<i8>().expect("Failed parsing i8.")),
         ))
     }
 
@@ -64,17 +64,17 @@ impl InstrParser {
     }
 }
 
-struct VCPU {
+struct VCpu {
     x_reg: isize,
     cycle: usize,
     next_cycle_particuliar_value_index: Option<usize>,
     interesting_signal_strenghts: [Option<isize>; CYCLE_PARTICULIAR_VALUES_COUNT],
-    crt: Option<CRT>,
+    crt: Option<Crt>,
 }
 
-impl VCPU {
+impl VCpu {
     fn new() -> Self {
-        VCPU {
+        VCpu {
             x_reg: 1,
             cycle: 0,
             next_cycle_particuliar_value_index: Some(0),
@@ -83,7 +83,7 @@ impl VCPU {
         }
     }
     fn set_crt(&mut self) {
-        self.crt = Some(CRT::new());
+        self.crt = Some(Crt::new());
     }
     fn get_signal_strength(&self) -> isize {
         self.x_reg * self.cycle as isize
@@ -113,10 +113,10 @@ impl VCPU {
     }
     fn run_instr(&mut self, instr: &Instr) {
         match instr {
-            Instr::NOOP => {
+            Instr::Noop => {
                 self.increase_cycle();
             }
-            Instr::ADDX(d) => {
+            Instr::Addx(d) => {
                 self.increase_cycle();
                 self.increase_cycle();
                 self.x_reg += *d as isize;
@@ -133,13 +133,13 @@ impl VCPU {
     }
 }
 
-struct CRT {
+struct Crt {
     screen: String,
 }
 
-impl CRT {
+impl Crt {
     fn new() -> Self {
-        CRT {
+        Crt {
             screen: String::new(),
         }
     }
@@ -147,7 +147,7 @@ impl CRT {
     fn draw_pixel(&mut self, x_reg: isize, cycle: usize) {
         let npixel_index = cycle % 40;
         let x: usize = x_reg.clamp(0, 39) as usize;
-        if npixel_index <= x + 1 && npixel_index >= x.checked_sub(1).unwrap_or(0) {
+        if npixel_index <= x + 1 && npixel_index >= x.saturating_sub(1) {
             self.screen.push('#');
         } else {
             self.screen.push('.')
@@ -160,14 +160,14 @@ impl CRT {
 
 pub fn part_one(input: &str) -> Option<isize> {
     let instrs = InstrParser::parse(input.lines());
-    let mut vcpu = VCPU::new();
+    let mut vcpu = VCpu::new();
     instrs.iter().for_each(|instr| vcpu.run_instr(instr));
     Some(vcpu.get_total_signal_strength())
 }
 
 pub fn part_two(input: &str) -> Option<String> {
     let instrs = InstrParser::parse(input.lines());
-    let mut vcpu = VCPU::new();
+    let mut vcpu = VCpu::new();
     vcpu.set_crt();
     vcpu.compute_display(&instrs);
     Some(vcpu.crt.unwrap().screen)
