@@ -11,6 +11,7 @@
 // 2427 (elapsed: 347.03µs)
 
 use std::cmp::Ordering;
+use advent_of_code::helpers::{Point, ShiftedGrid};
 
 #[derive(Clone, Copy)]
 enum Dir {
@@ -93,28 +94,32 @@ fn parse_moves(input: &str) -> ParseMovesResult {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
-struct Point(i32, i32);
-impl Point {
-    pub fn x(&self) -> i32 {
-        self.0
-    }
-    pub fn y(&self) -> i32 {
-        self.1
-    }
-    pub fn right(&mut self) {
+trait Knot {
+    fn right(&mut self);
+    fn left(&mut self);
+    fn up(&mut self);
+    fn down(&mut self);
+    fn is_touching(&self, point: &Self) -> bool;
+    fn towards_vert(&mut self, point: &Self);
+    fn towards_hori(&mut self, point: &Self);
+    fn trail_towards(&mut self, point: &Self);
+}
+
+// struct Point(i32, i32);
+impl Knot for Point {
+    fn right(&mut self) {
         self.0 += 1;
     }
-    pub fn left(&mut self) {
+    fn left(&mut self) {
         self.0 -= 1;
     }
-    pub fn up(&mut self) {
+    fn up(&mut self) {
         self.1 += 1;
     }
-    pub fn down(&mut self) {
+    fn down(&mut self) {
         self.1 -= 1;
     }
-    pub fn is_touching(&self, point: &Self) -> bool {
+    fn is_touching(&self, point: &Self) -> bool {
         if (point.x() - self.x()).abs() <= 1 && (point.y() - self.y()).abs() <= 1 {
             return true;
         }
@@ -134,53 +139,12 @@ impl Point {
             Ordering::Less => self.left(),
         }
     }
-    pub fn trail_towards(&mut self, point: &Self) {
+    fn trail_towards(&mut self, point: &Self) {
         if self.is_touching(point) {
             return;
         }
         self.towards_hori(point);
         self.towards_vert(point);
-    }
-}
-
-struct ShiftedGrid<T> {
-    vec: Vec<T>,
-    bot_left: Point,
-    line_l: usize,
-}
-
-impl<T> ShiftedGrid<T>
-where
-    T: Copy,
-{
-    pub fn new(bot_left: Point, top_right: Point, default: T) -> Self {
-        let line_l = top_right.x() - bot_left.x() + 1;
-        assert!(line_l >= 0);
-        let col_h = top_right.y() - bot_left.y() + 1;
-        assert!(col_h >= 0);
-        let capacity = (line_l * col_h) as usize;
-        // println!("bot_left: {bot_left:?}");
-        ShiftedGrid {
-            bot_left,
-            vec: vec![default; capacity],
-            line_l: line_l as usize,
-        }
-    }
-
-    fn shift_coords(&self, point: &Point) -> Point {
-        // requesting bot_left => 0,0
-        // requesting 0,0 => -botleft.x, -botleft.y
-        let x = point.x() - self.bot_left.x();
-        let y = point.y() - self.bot_left.y();
-        assert!(x >= 0);
-        assert!(y >= 0);
-        Point(x, y)
-    }
-
-    fn set(&mut self, point: &Point, val: T) {
-        let point = self.shift_coords(point);
-        // println!("\tlen: {}", self.vec.len());
-        self.vec[point.x() as usize + (point.y() as usize * self.line_l)] = val;
     }
 }
 
