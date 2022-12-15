@@ -3,7 +3,23 @@
  * Example import from this file: `use advent_of_code::helpers::example_fn;`.
  */
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+use std::cmp::Ordering;
+
+pub trait Within {
+    fn within(&self, other1: &Self, other2: &Self) -> bool;
+}
+
+impl<T> Within for T
+where
+    T: Ord,
+{
+    fn within(&self, other1: &Self, other2: &Self) -> bool {
+        let ma = other2.max(other1);
+        let mi = other2.min(other1);
+        mi <= self && self <= ma
+    }
+}
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Point(pub i32, pub i32);
 
 impl Point {
@@ -12,6 +28,21 @@ impl Point {
     }
     pub fn y(&self) -> i32 {
         self.1
+    }
+}
+
+impl Ord for Point {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.x().cmp(&other.x()) {
+            Ordering::Equal => self.y().cmp(&other.y()),
+            any => any,
+        }
+    }
+}
+
+impl PartialOrd for Point {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

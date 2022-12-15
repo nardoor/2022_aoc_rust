@@ -41,10 +41,7 @@ impl Tree {
         alt((Self::parse_branch, Self::parse_leaf))(input)
     }
     fn is_branch(&self) -> bool {
-        match self {
-            Tree::Branch(_) => true,
-            _ => false,
-        }
+        matches!(self, Tree::Branch(_))
     }
 }
 

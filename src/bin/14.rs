@@ -1,5 +1,5 @@
 /*
-Release -> 
+Release ->
 🎄 Part 1 🎄
 625 (elapsed: 267.99ms)
 🎄 Part 2 🎄
@@ -19,7 +19,7 @@ struct RockLine(Vec<(usize, usize)>);
 impl RockLine {
     fn covers(&self, p: (usize, usize)) -> bool {
         for points in self.0.windows(2) {
-            let p1 = points.get(0).unwrap();
+            let p1 = points.first().unwrap();
             let p2 = points.get(1).unwrap();
             if p.1 == p1.1 && p1.1 == p2.1 {
                 let mi = p1.0.min(p2.0);
@@ -64,7 +64,7 @@ impl Cave {
                     |(d1, _, d2): (&str, _, &str)| (d1.parse().unwrap(), d2.parse().unwrap()),
                 ),
             ),
-            |v| RockLine(v),
+            RockLine,
         )(line)
     }
     fn is_free(&self, p: (usize, usize)) -> bool {
@@ -86,7 +86,7 @@ impl Cave {
             }
         }
 
-        return true;
+        true
     }
     fn sand_fall(&mut self) -> Option<(usize, usize)> {
         if self.sand.contains(&SAND_ORIGIN) {
@@ -140,7 +140,7 @@ impl From<&str> for Cave {
 
 pub fn part_one(input: &str) -> Option<usize> {
     let mut cave = Cave::from(input);
-    while cave.sand_fall() != None {}
+    while cave.sand_fall().is_some() {}
 
     Some(cave.sand.len())
 }
@@ -149,7 +149,7 @@ pub fn part_two(input: &str) -> Option<usize> {
     let mut cave = Cave::from(input);
     cave.set_floor();
 
-    while cave.sand_fall() != None {}
+    while cave.sand_fall().is_some() {}
     Some(cave.sand.len())
 }
 
