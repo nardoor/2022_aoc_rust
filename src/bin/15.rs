@@ -1,3 +1,17 @@
+/*
+-> Debug:
+🎄 Part 1 🎄
+4961647 (elapsed: 14.93s)
+🎄 Part 2 🎄
+12274327017867 (elapsed: 11.91s)
+
+-> Release:
+🎄 Part 1 🎄
+4961647 (elapsed: 1.22s)
+🎄 Part 2 🎄
+12274327017867 (elapsed: 2.02s)
+*/
+
 use advent_of_code::helpers::{Point, Within};
 use nom::{
     bytes::complete::tag,
@@ -73,7 +87,7 @@ impl Sensor {
     }
 
     // fn get_border<'a>(&'a self) -> impl Iterator<Item = Point> + 'a {
-    fn get_border(& self) -> impl Iterator<Item = Point> + '_ {
+    fn get_border(&self) -> impl Iterator<Item = Point> + '_ {
         let out_of_range = self.range() + 1;
         (0..out_of_range).flat_map(move |dx| {
             let dy = out_of_range - dx;
