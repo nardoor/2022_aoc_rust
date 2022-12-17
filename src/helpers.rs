@@ -19,7 +19,7 @@ where
         mi <= self && self <= ma
     }
 }
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Point(pub i32, pub i32);
 
 impl Point {
